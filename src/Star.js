@@ -23,7 +23,8 @@ export default class Star {
         this._mesh.position.set( Math.cos(coord.alt)*Math.cos(coord.az)*(dist), Math.cos(coord.alt)*Math.sin(coord.az)*(dist),Math.sin(coord.alt)*(dist) )
         this._mesh.rotation.x += 0.01;
         this._mesh.rotation.y += 0.01;
-        console.log(this._mesh.position)
+        
+    //console.log(this._mesh.position)
     }
     render() {
 

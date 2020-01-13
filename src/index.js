@@ -49,15 +49,11 @@ function init() {
     scene.add(light)
      loadJSON(function(json) {
       data = json;
-      let num=20000,max=60000,star,coord
+      let num=10000,max=60000,star,coord
         for (let index = 0; index < max; index+=(max/num)) {   
-       
-           
             coord = AstrometryHelper.radec2azel(data[index].ra, data[index].dec, 0, 0,date)
             star= new Star (coord.az,coord.alt,data[index].dist,scene, starGeo, starMat)
             stars.push(star)
-
-            
         }
     });
 
@@ -75,14 +71,14 @@ function init() {
 }
 
 function update() {
-      //   for (let index = 0; index < stars.length; index++) {
-      //       let coord = AstrometryHelper.radec2azel(data[index].ra, data[index].dec, 0, 0,date)
-      //        stars[index].update(coord,data[index].dist)
-      //  }
-    camera.rotation.y += (Math.PI / 180) * 0.2
-    camera.rotation.z += (Math.PI / 180) * 0.2
-    camera.position.z += 0.1
-    // date.setMinutes(date.getMinutes()+1);
+          for (let index = 0; index < stars.length; index++) {
+                let coord = AstrometryHelper.radec2azel(data[index].ra, data[index].dec, 0, 0,date)
+                stars[index].update(coord,data[index].dist)
+          }
+    //camera.rotation.y += (Math.PI / 180) * 0.2
+    // camera.rotation.z += (Math.PI / 180) * 0.2
+    //camera.position.z -= 10
+     date.setMinutes(date.getMinutes()+1);
    
     
     
