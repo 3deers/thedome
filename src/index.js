@@ -49,7 +49,7 @@ function init() {
     scene.add(light)
      loadJSON(function(json) {
       data = json;
-      let num=10000,max=60000,star,coord
+      let num=20000,max=60000,star,coord
         for (let index = 0; index < max; index+=(max/num)) {   
             coord = AstrometryHelper.radec2azel(data[index].ra, data[index].dec, 0, 0,date)
             star= new Star (coord.az,coord.alt,data[index].dist,scene, starGeo, starMat)
