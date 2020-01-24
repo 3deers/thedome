@@ -8,10 +8,15 @@ console.log(window.innerWidth)
 /**MAIN SCENE */
 let renderer, scene, camera, light, tick;
 let date = new Date(2020, 0, 1, 12, 0, 0);
-
+var textureLoader = new THREE.TextureLoader();
+let controls 
 /**STARS */
 let starGeo = new THREE.SphereBufferGeometry(1, 1, 1),
   starMat = new THREE.MeshLambertMaterial({ color: 'red' }),
+  
+  sprite = textureLoader.load( './assets/img/star-2.png' ),
+  sprite2 = textureLoader.load( './assets/img/death-star.png' ),
+  starPartMat= new THREE.PointsMaterial( { size: 5, sizeAttenuation: true,blending: THREE.AdditiveBlending, map: sprite, alphaTest: 0.5, transparent: true } ),
   data,
   stars = [];
 
@@ -41,7 +46,7 @@ function init() {
   scene = new THREE.Scene();
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setClearColor("#fcfcfc");
+  renderer.setClearColor("#010101");
   renderer.setSize(window.innerWidth, window.innerHeight);
 
   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -86,7 +91,7 @@ function init() {
   starsGeometry = new THREE.BufferGeometry();
   starsGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   starsMaterial = new THREE.PointsMaterial({ color: 'red' });
-  starField = new THREE.Points(starsGeometry, starsMaterial);
+  starField = new THREE.Points(starsGeometry, starPartMat);
   scene.add(starField);
 
 
@@ -100,33 +105,37 @@ function init() {
   });
 
   tick = false
+  renderer.domElement.addEventListener('mousedown', downClbk);
+renderer.domElement.addEventListener('mouseup', upClbk);
+
   loop()
 
 }
 
 function update() {
   let coord;
+  // let UTCDays = date.getTime()
+  // let LST = AstrometryHelper.getLST(UTCDays,0);
+
 
   for (let index = 0, particle = 0; index < stars.length; index++ , particle += 3) {
     coord = AstrometryHelper.radec2azel(data[index].ra, data[index].dec, 0, 0, date)
-    //coord = {az:Math.random(),alt:Math.random()}
     stars[index].update(coord, data[index].dist)
 
-    // starField.geometry.attributes.position.array[particle] = stars[index].getPosition().x;
-    // starField.geometry.attributes.position.array[particle + 1] = stars[index].getPosition().y;
-    // starField.geometry.attributes.position.array[particle + 2] = stars[index].getPosition().z;
-
-    if (stars[index].getPosition().distanceTo(camera.position) < 100) {
-      stars[index].show(scene)
-    } else {
-      stars[index].hide(scene)
-    }
+     starField.geometry.attributes.position.array[particle] = stars[index].getPosition().x;
+     starField.geometry.attributes.position.array[particle + 1] = stars[index].getPosition().y;
+     starField.geometry.attributes.position.array[particle + 2] = stars[index].getPosition().z
+     if (stars[index].getPosition().distanceTo(camera.position) < 100) {
+       stars[index].show(scene)
+     } else {
+       stars[index].hide(scene)
+     }
   }
   starField.geometry.attributes.position.needsUpdate = true;
-  camera.rotation.y += (Math.PI / 180) * 0.2
-  camera.rotation.z += (Math.PI / 180) * 0.2
-  camera.position.z -= 1
-  //date.setMinutes(date.getMinutes() - 1);
+  //camera.rotation.y += (Math.PI / 180) * 0.2
+  //camera.rotation.z += (Math.PI / 180) * 0.2
+  //camera.position.z -= 1
+  date.setMinutes(date.getMinutes() - 1);
 
 
 
@@ -166,8 +175,25 @@ function loop() {
 
 }
 
+/* The Important Bit */
 
-
+var startX, startY;
+function downClbk(e) {
+  renderer.domElement.addEventListener('mousemove', moveClbk);
+  startX = e.clientX; startY = e.clientY;
+}
+function upClbk(e) {
+  renderer.domElement.removeEventListener('mousemove', moveClbk);
+}
+function moveClbk(e) {
+  var delX = e.clientX - startX;
+  var delY = e.clientY - startY;
+  var width = window.innerWidth, height = window.innerHeight, min = Math.min(width, height);
+  camera.rotation.x += delY/min;
+  camera.rotation.y += delX/min;
+  startX = e.clientX; startY = e.clientY;
+  renderer.render(scene, camera);
+}
 
 setInterval(allowUpdate, 33); // 33 milliseconds = ~ 30 frames per sec
 console.log("Oh")

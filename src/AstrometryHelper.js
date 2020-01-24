@@ -99,13 +99,27 @@ export default class AstrometryHelper {
         return 24.0*d;
     }
 
-     static radec2azel(ra, dec, lat, lon,_date){
+    static getOptimizedLST(clock,lon){
+        if(typeof clock==="undefined" || typeof lon==="undefined") return { status: -1 };
+        var GST =  this.getGST(clock);
+        var d = (GST + lon/15.0)/24.0;
+        d = d - Math.floor(d);
+        if(d < 0) d += 1;
+        return 24.0*d;
+    }
+
+     static radec2azel(ra, dec, lat, lon,_date,_LST){
         let raH = this.convertTo(ra);
         
         let error=raH-(raH/ dayMs)*(1.55*3600000);
         let UTCDays = _date.getTime()-error
         
-        let LST = this.getLST(UTCDays,lon);
+        let LST;
+        if(typeof _LST==="undefined")
+        LST = this.getLST(UTCDays,lon);
+        else
+         LST = _LST;
+         
         
         var ha = LST*15 - ra;
         
