@@ -11,7 +11,7 @@ let date = new Date(2020, 0, 1, 12, 0, 0);
 var textureLoader = new THREE.TextureLoader();
 let controls 
 /**STARS */
-let starGeo = new THREE.SphereBufferGeometry(1, 1, 1),
+let starGeo = new THREE.SphereBufferGeometry(4, 4, 4),
   starMat = new THREE.MeshLambertMaterial({ color: 'red' }),
   
   sprite = textureLoader.load( './assets/img/star-2.png' ),
@@ -114,12 +114,12 @@ renderer.domElement.addEventListener('mouseup', upClbk);
 
 function update() {
   let coord;
-  // let UTCDays = date.getTime()
-  // let LST = AstrometryHelper.getLST(UTCDays,0);
+   let UTCDays = date.getTime()
+   let LST = AstrometryHelper.getLST(UTCDays,0);
 
 
   for (let index = 0, particle = 0; index < stars.length; index++ , particle += 3) {
-    coord = AstrometryHelper.radec2azel(data[index].ra, data[index].dec, 0, 0, date)
+    coord = AstrometryHelper.radec2azel(data[index].ra, data[index].dec, 0, 0, date, LST)
     stars[index].update(coord, data[index].dist)
 
      starField.geometry.attributes.position.array[particle] = stars[index].getPosition().x;
@@ -134,8 +134,8 @@ function update() {
   starField.geometry.attributes.position.needsUpdate = true;
   //camera.rotation.y += (Math.PI / 180) * 0.2
   //camera.rotation.z += (Math.PI / 180) * 0.2
-  //camera.position.z -= 1
-  date.setMinutes(date.getMinutes() - 1);
+  camera.position.z -= 1
+  //date.setMinutes(date.getMinutes() - 1);
 
 
 

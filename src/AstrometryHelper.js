@@ -110,15 +110,19 @@ export default class AstrometryHelper {
 
      static radec2azel(ra, dec, lat, lon,_date,_LST){
         let raH = this.convertTo(ra);
-        
-        let error=raH-(raH/ dayMs)*(1.55*3600000);
-        let UTCDays = _date.getTime()-error
+        //He calculado el error aqui pero el LST solo una vez fuera del bucle, y le paso siempre el mismo, ha mejorado el rendimiento a tope
+        let error=raH-(raH/ dayMs)*(1.65*3600000);
+        error = error / 3600000
+
+        let UTCDays = _date.getTime();
         
         let LST;
         if(typeof _LST==="undefined")
         LST = this.getLST(UTCDays,lon);
         else
-         LST = _LST;
+        LST = _LST;
+
+        LST -= error;
          
         
         var ha = LST*15 - ra;
