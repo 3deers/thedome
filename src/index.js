@@ -1,29 +1,35 @@
-//import * as THREE from '../node_modules/three/build/three.min.js';
-//import * as GSAP from '../node_modules/gsap/dist/gsap.min.js';
+
 import AstrometryHelper from './AstrometryHelper.js';
 import Star from './Star.js';
+import Planet from './Planet.js';
 
 
-console.log(window.innerWidth)
+
 /**MAIN SCENE */
-let renderer, scene, camera, light, tick;
-let date = new Date(2020, 0, 1, 12, 0, 0);
+var renderer, scene, camera, light, tick;
+var date = new Date('January 01 , 2000 00:10:00');
 var textureLoader = new THREE.TextureLoader();
-let controls 
+var controls,cameraDir=new THREE.Vector3( );;
+var accelerationDelta = {push:0,pitch:0,bend:0};
+
 /**STARS */
-let starGeo = new THREE.SphereBufferGeometry(4, 4, 4),
-  starMat = new THREE.MeshLambertMaterial({ color: 'red' }),
-  
-  sprite = textureLoader.load( './assets/img/star-2.png' ),
-  sprite2 = textureLoader.load( './assets/img/death-star.png' ),
-  starPartMat= new THREE.PointsMaterial( { size: 5, sizeAttenuation: true,blending: THREE.AdditiveBlending, map: sprite, alphaTest: 0.5, transparent: true } ),
-  data,
-  stars = [];
+var starGeometry = new THREE.SphereBufferGeometry(4, 4, 4);
+var starMaterial = new THREE.MeshBasicMaterial({ color: 'yellow' });
+var moonGeometry = new THREE.SphereBufferGeometry(10, 10, 10)
+var moonMaterial = new THREE.MeshBasicMaterial({ color: 'red' });
+var sprite = textureLoader.load('./assets/img/star-2.png');
+var sprite2 = textureLoader.load('./assets/img/death-star.png');
+var data;
+var stars = [];
+
+/**PLANETS */
+var moon;
 
 
 /**STARFIELD */
-let numParticles, positions, scales;
-let starsGeometry, starsMaterial, starField;
+var starFieldMaterial = new THREE.PointsMaterial({ size: 10, sizeAttenuation: true, blending: THREE.AdditiveBlending, map: sprite, alphaTest: 0.9, transparent: true });
+var starFieldGeometry = new THREE.BufferGeometry();
+var starField;
 
 
 function loadJSON(callback) {
@@ -38,107 +44,141 @@ function loadJSON(callback) {
   xobj.send(null);
 }
 
+function initScene() {
 
-function init() {
-
-
-  /**LinitScene*/
   scene = new THREE.Scene();
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setClearColor("#010101");
   renderer.setSize(window.innerWidth, window.innerHeight);
 
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
   camera.position.x = 0;
   camera.position.y = 0;
   camera.position.z = 0;
   camera.updateProjectionMatrix();
 
-  light = new THREE.PointLight(0xFFFFFF, 1, 500)
+  light = new THREE.PointLight(0xFFFFFF, 1, 500, 1000)
   light.position.set(10, 0, 25)
   scene.add(light)
+
+
+}
+
+function initPlanets(params) {
+  var tmpCoord
+  tmpCoord = AstrometryHelper.CalculateHorizontalCoordinatesMoon(0, 0, date)
+  moon = new Planet(tmpCoord.az, tmpCoord.alt, tmpCoord.dist, scene, moonGeometry, moonMaterial)
+  console.log(moon.getDistance())
+}
+
+function initStars() {
+  /**StarObjects */
+  var tmpStar, tmpCoord
+
+  for (var index = 0; index < data.length; index++) {
+    tmpStar = new Star(0, 0, 0, scene, starGeometry, starMaterial)
+    tmpCoord = AstrometryHelper.radec2azel(data[index].ra, data[index].dec, 0, 0, date)
+    tmpStar.setCoord(tmpCoord)
+    tmpStar.setDistance(data[index].dist)
+    tmpStar.setPosition()
+    stars.push(tmpStar)
+  }
+
+  /**StarField BufferGeometry */
+  var numStars = stars.length;
+  var starFieldPositions = new Float32Array(numStars * 3);
+
+  for (var i = 0, index = 0; i < numStars; i++ , index += 3) { //hay pillin que no era ++ era +=3 jejeje
+
+    starFieldPositions[index] = stars[i].getPosition().x;
+    starFieldPositions[index + 1] = stars[i].getPosition().y;
+    starFieldPositions[index + 2] = stars[i].getPosition().z;
+
+  }
+
+  starFieldGeometry.setAttribute('position', new THREE.BufferAttribute(starFieldPositions, 3));
+  starField = new THREE.Points(starFieldGeometry, starFieldMaterial);
+
+  scene.add(starField);
+}
+
+function initInputHandlers() {
+
+  document.body.appendChild(renderer.domElement);
+  window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+  });
+  renderer.domElement.addEventListener('mousedown', downClbk);
+  renderer.domElement.addEventListener('mouseup', upClbk);
+  document.addEventListener('keydown', keyDown);
+
+}
+
+function init() {
+
+  initScene();
 
   /**LOADING DATA */
   loadJSON(function (json) { data = json });
 
-  /**initStars */
-  let star, starRef, coord
-  coord = AstrometryHelper.radec2azel(data[0].ra, data[0].dec, 0, 0, date)
-  for (let index = 0; index < data.length; index++) {
-    starRef = new Star(0, 0, 0, scene, starGeo, starMat)
-    coord = AstrometryHelper.radec2azel(data[index].ra, data[index].dec, 0, 0, date)
-    starRef.setCoord(coord)
-    starRef.setDistance(data[index].dist)
-    starRef.setPosition()
-    star = starRef
-    stars.push(star)
-  }
+  initStars()
+  initPlanets()
 
-  /**initStarField */
-  var numParticles = stars.length;
-  var positions = new Float32Array(numParticles * 3);
-
-  for (var i = 0, index = 0; i < numParticles; i++ , index += 3) { //hay pillin que no era ++ era +=3 jejeje
-
-    positions[index] = stars[i].getPosition().x;
-    positions[index + 1] = stars[i].getPosition().y;
-    positions[index + 2] = stars[i].getPosition().z;
-
-  }
-
-
-  starsGeometry = new THREE.BufferGeometry();
-  starsGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  starsMaterial = new THREE.PointsMaterial({ color: 'red' });
-  starField = new THREE.Points(starsGeometry, starPartMat);
-  scene.add(starField);
-
-
-
-
-  document.body.appendChild(renderer.domElement);
-  window.addEventListener('resize', () => {
-
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-  });
-
+  initInputHandlers()
   tick = false
-  renderer.domElement.addEventListener('mousedown', downClbk);
-renderer.domElement.addEventListener('mouseup', upClbk);
-
   loop()
 
 }
 
 function update() {
-  let coord;
-   let UTCDays = date.getTime()
-   let LST = AstrometryHelper.getLST(UTCDays,0);
+  var coord;
+  var UTCDays = date.getTime()
+  var LST = AstrometryHelper.getLST(UTCDays, 0);
 
-
-  for (let index = 0, particle = 0; index < stars.length; index++ , particle += 3) {
+  for (var index = 0, particle = 0; index < stars.length; index++ , particle += 3) {
     coord = AstrometryHelper.radec2azel(data[index].ra, data[index].dec, 0, 0, date, LST)
     stars[index].update(coord, data[index].dist)
 
-     starField.geometry.attributes.position.array[particle] = stars[index].getPosition().x;
-     starField.geometry.attributes.position.array[particle + 1] = stars[index].getPosition().y;
-     starField.geometry.attributes.position.array[particle + 2] = stars[index].getPosition().z
-     if (stars[index].getPosition().distanceTo(camera.position) < 100) {
-       stars[index].show(scene)
-     } else {
-       stars[index].hide(scene)
-     }
+    starField.geometry.attributes.position.array[particle] = stars[index].getPosition().x;
+    starField.geometry.attributes.position.array[particle + 1] = stars[index].getPosition().y;
+    starField.geometry.attributes.position.array[particle + 2] = stars[index].getPosition().z
+
+    if (stars[index].getPosition().distanceTo(camera.position) < 100) {
+      //stars[index].show(scene) //
+    } else {
+      stars[index].hide(scene)
+    }
   }
   starField.geometry.attributes.position.needsUpdate = true;
-  //camera.rotation.y += (Math.PI / 180) * 0.2
-  //camera.rotation.z += (Math.PI / 180) * 0.2
-  camera.position.z -= 1
-  //date.setMinutes(date.getMinutes() - 1);
+
+  coord = AstrometryHelper.CalculateHorizontalCoordinatesMoon(0, 0, date)
+  moon.update(coord)
 
 
+  //date.setMinutes(date.getMinutes() + 1);
 
+
+  if(accelerationDelta.push != 0){
+    if(accelerationDelta.push < 0.5 && accelerationDelta.push > -0.5){
+      accelerationDelta.push = 0;
+    } 
+    else if (accelerationDelta.push < 0){
+      accelerationDelta.push += 0.1
+    } else{
+      accelerationDelta.push -= 0.1
+    }
+  }
+
+  camera.getWorldDirection(cameraDir);
+    //camera.position.z+= 1 * accelerationDelta.push
+    camera.position.addScaledVector(cameraDir, accelerationDelta.push);
+
+  console.clear()
+  console.log(moon.getCoord());
+  console.log(moon.getPosition());
+  console.log(date);
 
 }
 
@@ -153,11 +193,7 @@ function render() {
 
 function loop() {
 
-  // tick=true;
-  //Procesamos el input
-  //TODO
-  //Si es el momento de updatear, updateamos
-  //ELAPSED_TIME > UPDATE_TICK_TIME
+ 
   if (tick) {
 
     update();
@@ -189,9 +225,28 @@ function moveClbk(e) {
   var delX = e.clientX - startX;
   var delY = e.clientY - startY;
   var width = window.innerWidth, height = window.innerHeight, min = Math.min(width, height);
-  camera.rotation.x += delY/min;
-  camera.rotation.y += delX/min;
+  camera.rotation.x += delY / min;
+  camera.rotation.y += delX / min;
   startX = e.clientX; startY = e.clientY;
+  //renderer.render(scene, camera);
+}
+function keyDown(e) {
+
+
+  if (e.keyCode == '38') {
+    accelerationDelta.push += 0.4
+  }
+  else if (e.keyCode == '40') {
+    accelerationDelta.push -= 0.4  
+    // down arrow
+  }
+  else if (e.keyCode == '37') {
+    // left arrow
+  }
+  else if (e.keyCode == '39') {
+    // right arrow
+  }
+
   renderer.render(scene, camera);
 }
 

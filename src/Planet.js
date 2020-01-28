@@ -1,10 +1,7 @@
-var SPREAD_FACTOR = 15
-var INITIAL_DISTANCE = 500
 
-
-export default class Star {
+export default class Planet {
     constructor(az, alt,dist , scene, geometry, material) {
-        dist = dist*SPREAD_FACTOR + INITIAL_DISTANCE
+        dist += 500
         this._coord = { az, alt }
         this._dist = dist
         this._position = new THREE.Vector3()
@@ -12,8 +9,9 @@ export default class Star {
         this._material = material;
         this._mesh = new THREE.Mesh(this._geometry, this._material);
         this._mesh.position.set( Math.cos(alt)*Math.cos(az)*(dist), Math.cos(alt)*Math.sin(az)*(dist),Math.sin(alt)*(dist) )
-        this._visible = false;
-        
+        this._visible = true;
+        scene.add(this._mesh)
+       
         
     }
     getCoord (){
@@ -30,9 +28,9 @@ export default class Star {
     setCoord(c){
         this._coord=c
     }
-    setDistance(dist){
-        dist = dist*SPREAD_FACTOR + INITIAL_DISTANCE
-        this._dist=dist
+    setDistance(d){
+        d+=500
+        this._dist=d
     }
     getDistance(d){
        return this._dist
