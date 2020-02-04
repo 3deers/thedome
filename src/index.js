@@ -60,7 +60,7 @@ function initScene() {
 
   light = new THREE.PointLight(0xFFFFFF, 1, 500, 1000)
   light.position.set(10, 0, 25)
-  scene.add(light)
+  //scene.add(light)
 
 
 }
@@ -138,7 +138,7 @@ function update() {
   var LST = AstrometryHelper.getLST(UTCDays, 0);
 
   for (var index = 0, particle = 0; index < stars.length; index++ , particle += 3) {
-    coord = AstrometryHelper.radec2azel(data[index].ra, data[index].dec, 0, 0, date, LST)
+    coord = AstrometryHelper.radec2azel(data[index].ra, data[index].dec, 38, -0.5, date, LST)
     stars[index].update(coord, data[index].dist)
 
     starField.geometry.attributes.position.array[particle] = stars[index].getPosition().x;
@@ -146,18 +146,18 @@ function update() {
     starField.geometry.attributes.position.array[particle + 2] = stars[index].getPosition().z
 
     if (stars[index].getPosition().distanceTo(camera.position) < 100) {
-      //stars[index].show(scene) //
+      stars[index].show(scene) //
     } else {
       stars[index].hide(scene)
     }
   }
   starField.geometry.attributes.position.needsUpdate = true;
 
-  coord = AstrometryHelper.CalculateHorizontalCoordinatesMoon(0, 0, date)
+  coord = AstrometryHelper.CalculateHorizontalCoordinatesMoon(-0.5, 38, date)
   moon.update(coord)
 
 
-  //date.setMinutes(date.getMinutes() + 1);
+  date.setMinutes(date.getMinutes() + 1);
 
 
   if(accelerationDelta.push != 0){
@@ -254,3 +254,4 @@ setInterval(allowUpdate, 33); // 33 milliseconds = ~ 30 frames per sec
 console.log("Oh")
 window.onload = init();
 
+//!. Pedir solo las estrellas que sean visibles en la API 
