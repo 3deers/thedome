@@ -37,7 +37,7 @@ export default class Star {
     getDistance(d){
        return this._dist
     }
-    setPosition(){
+    setPosition(){        
         this._position.x=Math.cos(this._coord.alt)*Math.cos(this._coord.az)*(this._dist);
         this._position.y=Math.cos(this._coord.alt)*Math.sin(this._coord.az)*(this._dist);
         this._position.z=Math.sin(this._coord.alt)*(this._dist);

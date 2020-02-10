@@ -2,9 +2,10 @@
 import AstrometryHelper from './AstrometryHelper.js';
 import Star from './Star.js';
 import Planet from './Planet.js';
+import Pick3D from './Pick3D.js';
 
 
-
+console.log(window.innerWidth)
 /**MAIN SCENE */
 var renderer, scene, camera, light, tick;
 var date = new Date('January 01 , 2000 00:10:00');
@@ -46,7 +47,13 @@ function loadJSON(callback) {
 
 function initScene() {
 
+function init() {
+
+
+  /**LinitScene*/
   scene = new THREE.Scene();
+
+  pick3D = new Pick3D();
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setClearColor("#010101");
@@ -55,7 +62,7 @@ function initScene() {
   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
   camera.position.x = 0;
   camera.position.y = 0;
-  camera.position.z = 0;
+  camera.position.z = 1000;
   camera.updateProjectionMatrix();
 
   light = new THREE.PointLight(0xFFFFFF, 1, 500, 1000)
@@ -106,6 +113,14 @@ function initStars() {
 function initInputHandlers() {
 
   document.body.appendChild(renderer.domElement);
+
+  window.addEventListener('mousedown', function (event) {
+    pick3D.setPickPosition(event);
+    pick3D.pick(scene.children, camera);
+  });
+
+  window.addEventListener('mouseup', pick3D.clearPickPosition());
+
   window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -193,18 +208,19 @@ function render() {
 
 function loop() {
 
- 
+  // tick=true;
+  //Procesamos el input
+  //TODO
+  //Si es el momento de updatear, updateamos
+  //ELAPSED_TIME > UPDATE_TICK_TIME
   if (tick) {
 
     update();
     tick = false
-    //console.log("updated");
 
 
   }
   render()
-
-
   requestAnimationFrame(loop)
 
   return true;
